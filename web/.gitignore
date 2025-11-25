@@ -1,0 +1,7 @@
+node_modules/
+uploads/
+received-images/*
+!received-images/.gitkeep
+*.log
+.DS_Store
+.env

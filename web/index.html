@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Images Uploaded on Web</title>
+    <style>
+        body {
+            background: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid black;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        #gallery {
+            margin-top: 20px;
+        }
+        .image-box {
+            display: inline-block;
+            margin: 15px;
+            border: 1px solid #999;
+            padding: 10px;
+            background: #f9f9f9;
+            vertical-align: top;
+        }
+        .image-box img {
+            display: block;
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border: 1px solid #666;
+        }
+        .image-name {
+            margin-top: 8px;
+            font-size: 11px;
+            word-break: break-all;
+            max-width: 200px;
+        }
+        #upload-section {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            border-top: 2px solid #ccc;
+        }
+        #upload-btn {
+            padding: 12px 40px;
+            font-size: 16px;
+            background: #ddd;
+            border: 2px outset #999;
+            cursor: pointer;
+        }
+        #upload-btn:active {
+            border-style: inset;
+        }
+        #file-input {
+            display: none;
+        }
+        #loading {
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Images Uploaded on Web</h1>
+    
+    <div id="gallery"></div>
+    <div id="loading">Loading images...</div>
+    
+    <div id="upload-section">
+        <button id="upload-btn">Upload Image</button>
+        <input type="file" id="file-input" accept="image/*" multiple>
+    </div>
+
+    <script>
+        const gallery = document.getElementById("gallery");
+        const loading = document.getElementById("loading");
+        const uploadBtn = document.getElementById("upload-btn");
+        const fileInput = document.getElementById("file-input");
+
+        // Load images
+        function loadImages() {
+            fetch("/list")
+                .then(r => r.json())
+                .then(files => {
+                    loading.style.display = "none";
+                    gallery.innerHTML = "";
+                    
+                    if (files.length === 0) {
+                        gallery.innerHTML = "<p style='text-align:center; color:#666;'>No images uploaded yet. Click 'Upload Image' below to add one!</p>";
+                        return;
+                    }
+                    
+                    files.forEach(f => {
+                        const box = document.createElement("div");
+                        box.className = "image-box";
+                        box.innerHTML = `
+                            <img src="/uploads/${f}" alt="${f}">
+                            <div class="image-name">${f}</div>
+                        `;
+                        gallery.appendChild(box);
+                    });
+                })
+                .catch(err => {
+                    loading.innerHTML = "Error loading images: " + err;
+                });
+        }
+
+        // Upload button click
+        uploadBtn.onclick = () => {
+            fileInput.click();
+        };
+
+        // Handle file selection
+        fileInput.onchange = async () => {
+            const files = fileInput.files;
+            if (files.length === 0) return;
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = "Uploading...";
+
+            // Upload each file
+            for (let file of files) {
+                const formData = new FormData();
+                formData.append("image", file);
+                
+                await fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                });
+            }
+
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = "Upload Image";
+            fileInput.value = "";
+            loadImages();
+        };
+
+        // Load images on page load
+        loadImages();
+
+        // Auto-refresh every 5 seconds
+        setInterval(loadImages, 5000);
+    </script>
+</body>
+</html>
