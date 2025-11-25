@@ -100,6 +100,14 @@ app.get("/list", async (req, res, next) => {
     }
 });
 
+// Standardized error responses so fetch callers get JSON instead of HTML
+app.use((err, req, res, _next) => {
+    console.error(err);
+    res.status(500).json({
+        error: err?.message || "Internal Server Error"
+    });
+});
+
 // Get your local network IP (so friends can access)
 function getLocalIP() {
     const nets = os.networkInterfaces();
