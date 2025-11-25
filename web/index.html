@@ -88,20 +88,26 @@
             fetch("/list")
                 .then(r => r.json())
                 .then(files => {
+                    const images = files.map(entry => {
+                        if (typeof entry === "string") {
+                            return { name: entry, url: "/uploads/" + entry };
+                        }
+                        return entry;
+                    });
                     loading.style.display = "none";
                     gallery.innerHTML = "";
                     
-                    if (files.length === 0) {
+                    if (images.length === 0) {
                         gallery.innerHTML = "<p style='text-align:center; color:#666;'>No images uploaded yet. Click 'Upload Image' below to add one!</p>";
                         return;
                     }
                     
-                    files.forEach(f => {
+                    images.forEach(imgInfo => {
                         const box = document.createElement("div");
                         box.className = "image-box";
                         box.innerHTML = `
-                            <img src="/uploads/${f}" alt="${f}">
-                            <div class="image-name">${f}</div>
+                            <img src="${imgInfo.url}" alt="${imgInfo.name}">
+                            <div class="image-name">${imgInfo.name}</div>
                         `;
                         gallery.appendChild(box);
                     });
