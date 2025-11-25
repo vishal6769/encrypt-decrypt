@@ -12,11 +12,14 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 8080;
 
-const UPLOADS_DIR = path.join(__dirname, "uploads");
+const isVercel = process.env.VERCEL === "1";
+const UPLOADS_DIR = isVercel
+    ? path.join(os.tmpdir(), "uploads")
+    : path.join(__dirname, "uploads");
 
 // Make sure uploads folder exists
 if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR);
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
 // Serve homepage
@@ -70,6 +73,8 @@ app.listen(PORT, () => {
     console.log("========================================");
     console.log("Server running!");
     console.log("Local:   http://localhost:" + PORT);
-    console.log("Friends: http://" + ip + ":" + PORT);
+    if (!isVercel) {
+        console.log("Friends: http://" + ip + ":" + PORT);
+    }
     console.log("========================================");
 });
