@@ -4,7 +4,6 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
-import { put, list } from "@vercel/blob";
 
 // Needed to replicate __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -42,6 +41,14 @@ const storage = isVercel
     });
 const upload = multer({ storage });
 
+let blobClientPromise = null;
+function getBlobClient() {
+    if (!blobClientPromise) {
+        blobClientPromise = import("@vercel/blob");
+    }
+    return blobClientPromise;
+}
+
 // Upload route
 app.post("/upload", upload.single("image"), async (req, res, next) => {
     try {
@@ -52,6 +59,7 @@ app.post("/upload", upload.single("image"), async (req, res, next) => {
         const safeName = Date.now() + "-" + req.file.originalname.replace(/\s+/g, "_");
 
         if (isVercel) {
+            const { put } = await getBlobClient();
             // Persist image to Vercel Blob (needs BLOB_READ_WRITE_TOKEN env var)
             const blob = await put(`uploads/${safeName}`, req.file.buffer, {
                 access: "public",
@@ -72,6 +80,7 @@ app.post("/upload", upload.single("image"), async (req, res, next) => {
 app.get("/list", async (req, res, next) => {
     try {
         if (isVercel) {
+            const { list } = await getBlobClient();
             const blobs = await list({
                 prefix: "uploads/",
                 token: process.env.BLOB_READ_WRITE_TOKEN
